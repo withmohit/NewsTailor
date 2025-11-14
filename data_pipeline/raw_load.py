@@ -13,8 +13,8 @@ mongo_client = MongoClient(MONGO_URL)
 db_name = mongo_client['newsTailor']
 raw_collection = db_name['raw']
 
-common_feed = yaml.safe_load(open('data_pipeline/feeds.yaml'))
-links = common_feed['common']
+FEEDS = yaml.safe_load(open('data_pipeline/feeds.yaml'))
+
 
 def reduced_news(n):
     return {
@@ -24,7 +24,7 @@ def reduced_news(n):
             "published" : n['published']
         }
 
-def save_news(link):
+def save_news(link, category):
     news = get_feed(link)
     if not news:
         return
@@ -38,7 +38,7 @@ def save_news(link):
         ops.append(
             UpdateOne(
                 {"link": r['link']},
-                {"$setOnInsert": r},
+                {"$setOnInsert": {**r, "category": category} },
                 upsert=True
             )
         )
@@ -50,8 +50,9 @@ def save_news(link):
         print(f"DB insert failed with {e}")
 
 def main():
-    for feed_link in links:
-        save_news(feed_link)
+    for category in FEEDS:
+        for feed_link in FEEDS[category]:
+            save_news(feed_link, category)
         
 
 if __name__ == "__main__":

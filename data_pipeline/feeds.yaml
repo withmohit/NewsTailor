@@ -1,6 +1,14 @@
-common:
+not_sure:
   - https://timesofindia.indiatimes.com/rssfeedmostrecent.cms
   - https://timesofindia.indiatimes.com/rssfeedmostshared.cms
   - https://timesofindia.indiatimes.com/rssfeedstopstories.cms
   - https://www.thehindu.com/news/national/feeder/default.rss
   
+tech_and_science:
+  - https://timesofindia.indiatimes.com/rssfeeds/66949542.cms
+  - https://timesofindia.indiatimes.com/rssfeeds/-2128672765.cms
+  - https://www.thehindu.com/sci-tech/science/feeder/default.rss
+
+health:
+  - https://timesofindia.indiatimes.com/rssfeeds/2886704.cms
+  - https://www.thehindu.com/life-and-style/fitness/feeder/default.rss
