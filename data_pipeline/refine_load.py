@@ -1,8 +1,9 @@
+from datetime import datetime
 from dotenv import load_dotenv
 import os
 from bs4 import BeautifulSoup
 from pymongo import MongoClient, errors, UpdateOne
-from classification import predict_category
+from .classification import predict_category
 
 load_dotenv()
 
@@ -24,12 +25,11 @@ def reduce_basis_on_summary(raw_data):
 
     for data in raw_data:
         summary = (data.get('summary') or '').strip()
-        raw_collection.update_one({'_id': data['_id']}, {'$set': {'processed': True}})
         
         if summary == "":
             if '_id' in data:
                 try:
-                    raw_collection.update_one({'_id': data['_id']}, {'$set': {'rejected': True}})
+                    raw_collection.update_one({'_id': data['_id']}, {'$set': {'processed': True, 'rejected': True}})
                 except errors.PyMongoError as E :
                     print(E)
             continue
@@ -45,9 +45,11 @@ def reduce_basis_on_summary(raw_data):
                 existing['_id'] = data['_id']
                 existing['summary'] = summary
                 existing['category'] = data.get('category')
-                
-                raw_collection.update_one({'_id': existing['_id']}, {'$set': {'rejected': True}})
-
+                try:
+                    raw_collection.update_one({'_id': existing['_id']}, {'$set': {'processed': True, 'rejected': True, "updateTimeStamp":datetime.now()}})
+                except errors.PyMongoError as E:
+                    print(E)
+                    
         else:
             seen[link] = len(reduced_data)
             reduced_data.append(data)
@@ -60,6 +62,7 @@ def categorize_news(news_data):
         if given_category == 'not_sure':
             predicted_category = predict_category(news['summary'])
             news['category'] = predicted_category
+    return news_data
 
 def load_raw_data():
     raw_content = raw_collection.find({"processed": False, "rejected": False})
@@ -80,3 +83,16 @@ def main():
     
     classified_news_data = categorize_news(reduced_news_data)
     
+    for classified in classified_news_data:
+        raw_collection.update_one({'_id':classified['_id']},{'$set':{'processed': True, "updateTimeStamp":datetime.now()}})
+        refined_collection.insert_one({
+            "raw_id": classified['_id'],
+            "title": classified['title'],
+            "summary": classified['summary'],
+            "published": classified['published'],
+            "category": classified['category'],
+            "link": classified['link'],
+            "insertTimeStamp": datetime.now()
+        })
+
+main()
