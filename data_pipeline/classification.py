@@ -6,7 +6,7 @@ classifier = pipeline(
     model="valhalla/distilbart-mnli-12-1"
 )
 
-candidate_labels = ["tech_and_science", "health", "india"]
+candidate_labels = ["tech_and_science", "health", "india", "politics", "religion"]
 
 def predict_category(sequence_to_classify):
     result = classifier(sequence_to_classify, candidate_labels)
