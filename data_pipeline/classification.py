@@ -6,8 +6,8 @@ classifier = pipeline(
     model="valhalla/distilbart-mnli-12-1"
 )
 
-sequence_to_classify = "This popular YouTuber's account got hacked: What happened and tips to safeguard your account"
-candidate_labels = ["talent", "tech", "terrorism"]
+candidate_labels = ["tech_and_science", "health", "india"]
 
-result = classifier(sequence_to_classify, candidate_labels)
-print(result)
+def predict_category(sequence_to_classify):
+    result = classifier(sequence_to_classify, candidate_labels)
+    return result['labels'][0]

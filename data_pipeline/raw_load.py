@@ -1,7 +1,9 @@
 import yaml
 import os
 from dotenv import load_dotenv
-from pymongo import MongoClient, errors, UpdateOne
+from dateutil import parser
+from datetime import datetime
+from pymongo import MongoClient, errors, InsertOne
 from data_pipeline.scraper import get_feed
 
 # Load environment variables from .env file
@@ -21,7 +23,7 @@ def reduced_news(n):
             "title" : n['title'].strip(),
             "summary" : n['summary'].strip(),
             "link" : n['link'],
-            "published" : n['published']
+            "published" : parser.parse(n['published']).replace(tzinfo=None)
         }
 
 def save_news(link, category):
@@ -33,13 +35,9 @@ def save_news(link, category):
     ops = []
     
     for r in reduced:
-        if r['summary'] == "" or r['title'] == r['summary']:
-            continue
         ops.append(
-            UpdateOne(
-                {"link": r['link']},
-                {"$setOnInsert": {**r, "category": category} },
-                upsert=True
+            InsertOne(
+                {**r, "category": category, "insertTimeStamp": datetime.now(), "rejected": False, "processed": False}
             )
         )
     
