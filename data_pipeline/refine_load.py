@@ -29,7 +29,7 @@ def reduce_basis_on_summary(raw_data):
         if summary == "":
             if '_id' in data:
                 try:
-                    raw_collection.update_one({'_id': data['_id']}, {'$set': {'processed': True, 'rejected': True}})
+                    raw_collection.update_one({'_id': data['_id']}, {'$set': {'processed': False, 'rejected': True}})
                 except errors.PyMongoError as E :
                     print(E)
             continue
@@ -40,13 +40,20 @@ def reduce_basis_on_summary(raw_data):
             idx = seen[link]
             existing = reduced_data[idx]
             existing_summary = (existing.get('summary') or '')
-
+            
             if len(summary) > len(existing_summary):
-                existing['_id'] = data['_id']
-                existing['summary'] = summary
-                existing['category'] = data.get('category')
                 try:
-                    raw_collection.update_one({'_id': existing['_id']}, {'$set': {'processed': True, 'rejected': True, "updateTimeStamp":datetime.now()}})
+                    if '_id' in existing:
+                        raw_collection.update_one({'_id': existing['_id']}, {'$set': {'processed': True, 'rejected': True, 'updateTimeStamp': datetime.now()}})
+                except errors.PyMongoError as E:
+                    print(E)
+
+                reduced_data[idx] = data
+                
+            else:
+                try:
+                    if '_id' in data:
+                        raw_collection.update_one({'_id': data['_id']}, {'$set': {'processed': True, 'rejected': True, 'updateTimeStamp': datetime.now()}})
                 except errors.PyMongoError as E:
                     print(E)
                     
@@ -70,7 +77,7 @@ def load_raw_data():
 
 def main():
     raw_news_data = load_raw_data()
-    # make an explicit list so we can iterate multiple times and mutate items
+    
     cleaned_items = []
 
     for content in raw_news_data:
