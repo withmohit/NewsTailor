@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import datetime, timezone
 from pymongo import MongoClient, errors
 import os
 from dotenv import load_dotenv
@@ -49,7 +50,7 @@ def main():
                     'summary': data['summary'],
                     'link': data['link'],
                     'title': data['title'],
-                    'updateTimeStamp': datetime.now()
+                    'forTTLStamp': datetime.now(timezone.utc)
                 }
             )
         except errors.PyMongoError as E:
