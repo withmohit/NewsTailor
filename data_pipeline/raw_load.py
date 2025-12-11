@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from dateutil import parser
 from datetime import datetime
-from pymongo import MongoClient, errors, InsertOne
+from pymongo import MongoClient, errors, UpdateOne
 from data_pipeline.scraper import get_feed
 
 # Load environment variables from .env file
@@ -35,9 +35,12 @@ def save_news(link, category):
     ops = []
     
     for r in reduced:
+
         ops.append(
-            InsertOne(
-                {**r, "category": category, "insertTimeStamp": datetime.now(), "rejected": False, "processed": False}
+            UpdateOne(
+                {"link": r["link"], "title": r["title"], "summary": r["summary"]},
+                {"$setOnInsert": {**r, "category": category, "insertTimeStamp": datetime.now(), "rejected": False, "processed": False}},
+                upsert=True
             )
         )
     
