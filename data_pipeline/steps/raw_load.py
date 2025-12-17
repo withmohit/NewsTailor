@@ -50,11 +50,11 @@ def save_news(link, category):
     except errors.PyMongoError as e:
         print(f"DB insert failed with {e}")
 
-def main():
+def run_raw_load():
     for category in FEEDS:
         for feed_link in FEEDS[category]:
             save_news(feed_link, category)
         
 
 if __name__ == "__main__":
-    main()
+    run_raw_load()

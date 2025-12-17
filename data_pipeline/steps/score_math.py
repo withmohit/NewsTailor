@@ -32,7 +32,7 @@ def compute_score(data):
     score = freshness_score * 0.65 + info_score * 0.45
     return score     
 
-def main():
+def run_scoring_process():
     news_data = load_refined()
 
     for data in news_data:
@@ -57,5 +57,4 @@ def main():
             print(E)
 
 if __name__ == "__main__":
-    main()
-    print('main')
+    run_scoring_process()

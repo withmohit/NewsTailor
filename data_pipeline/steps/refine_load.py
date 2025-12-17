@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from bs4 import BeautifulSoup
 from pymongo import MongoClient, errors, UpdateOne
-from .classification import predict_category
+from ..classification import predict_category
 
 load_dotenv()
 
@@ -75,7 +75,7 @@ def load_raw_data():
     raw_content = raw_collection.find({"processed": False, "rejected": False})
     return raw_content
 
-def main():
+def run_refine_load():
     raw_news_data = load_raw_data()
     
     cleaned_items = []
@@ -102,4 +102,5 @@ def main():
             "insertTimeStamp": datetime.now()
         })
 
-main()
+if __name__ == "__main__":
+    run_refine_load()

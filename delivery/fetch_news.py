@@ -14,14 +14,15 @@ scored_collection = db_name['scored']
 
 topics = ["tech_and_science", "crime", "india", "politics", "religion"]
 
+def fetch_fresh_news():
+    top_news_cache = {
+        cat: list(
+            scored_collection.find({"category": cat})
+                .sort("score", -1)
+                .limit(1)
+        )
+        for cat in topics
+    }
+    
+    return top_news_cache
 
-top_news_cache = {
-    cat: list(
-        scored_collection.find({"category": cat})
-            .sort("score", -1)
-            .limit(1)
-    )
-    for cat in topics
-}
-
-print(top_news_cache)
