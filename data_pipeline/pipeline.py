@@ -20,9 +20,8 @@ def log_pipeline_start():
                 "start_time": datetime.now()
             }
         )
-    print("Created run_id")
-    print(result)
-    print(result.inserted_id)
+    print(f"Created run_id : {result.inserted_id}")
+
     return result.inserted_id
 
 def mark_pipeline_success(run_id):
