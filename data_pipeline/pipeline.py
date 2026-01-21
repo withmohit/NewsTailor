@@ -1,15 +1,44 @@
+import datetime
+import os
+from dotenv import load_dotenv
+from pymongo import MongoClient
 from steps.raw_load import run_raw_load
 from steps.refine_load import run_refine_load
 from steps.score_math import run_scoring_process
 
+load_dotenv()
+
+MONGO_URL = os.getenv('MONGO_URL')
+
+mongo_client = MongoClient(MONGO_URL)
+db_name = mongo_client['newsTailor']
+pipeline_info = db_name['pipeline_info']
+
 def log_pipeline_start():
-    pass
+    run_id = pipeline_info.insert_one(
+            {
+                "start_time": datetime.now()
+            }
+        )
+    return run_id
 
 def mark_pipeline_success(run_id):
-    pass
+    pipeline_info.update_one(
+        {'_id': run_id},
+        {
+            "end_date": datetime.now(),
+            "message" : "sucess"
+        }
+    )
 
 def mark_pipeline_failed(run_id, message):
-    pass
+    pipeline_info.update_one(
+        {'_id': run_id},
+        {
+            "end_date": datetime.now(),
+            "message" : message
+        }
+    )
 
 def run_pipeline():
     
