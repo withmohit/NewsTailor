@@ -19,10 +19,12 @@ def fetch_fresh_news():
         cat: list(
             scored_collection.find({"category": cat})
                 .sort("score", -1)
-                .limit(1)
+                .limit(3)
         )
         for cat in topics
     }
     
     return top_news_cache
+
+print(fetch_fresh_news())
 
