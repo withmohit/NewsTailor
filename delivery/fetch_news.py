@@ -23,8 +23,8 @@ def fetch_fresh_news():
         )
         for cat in topics
     }
-    
+    print(top_news_cache)
     return top_news_cache
 
-print(fetch_fresh_news())
+fetch_fresh_news()
 

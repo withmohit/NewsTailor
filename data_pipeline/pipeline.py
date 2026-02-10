@@ -31,7 +31,7 @@ def mark_pipeline_success(run_id):
             "$set":
             {
             "end_date": datetime.now(),
-            "message" : "sucess"
+            "message" : "success"
             }
         }
     )
@@ -56,11 +56,11 @@ def run_pipeline():
     
     try:
         
-        run_raw_load()
-        run_refine_load()
+        # run_raw_load()
+        # run_refine_load()
         run_scoring_process()
 
-        mark_pipeline_success(run_id)
+        # mark_pipeline_success(run_id)
     
     except Exception as e:
         mark_pipeline_failed(run_id, str(e))

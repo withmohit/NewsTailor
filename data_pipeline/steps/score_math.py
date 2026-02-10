@@ -33,6 +33,7 @@ def compute_score(data):
     return score     
 
 def run_scoring_process():
+    print("-- Scoring Process Started --")
     news_data = load_refined()
 
     for data in news_data:
@@ -55,6 +56,7 @@ def run_scoring_process():
             )
         except errors.PyMongoError as E:
             print(E)
+    print("-- Scoring Process Completed --")
 
 if __name__ == "__main__":
     run_scoring_process()

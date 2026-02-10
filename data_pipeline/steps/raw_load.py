@@ -54,6 +54,7 @@ def run_raw_load():
     for category in FEEDS:
         for feed_link in FEEDS[category]:
             save_news(feed_link, category)
+    print("-- Raw Load Completed --")
         
 
 if __name__ == "__main__":

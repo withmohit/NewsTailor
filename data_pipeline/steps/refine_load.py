@@ -64,11 +64,13 @@ def reduce_basis_on_summary(raw_data):
     return reduced_data
 
 def categorize_news(news_data):
+    print("Classifying news categories...")
     for news in news_data:
         given_category = news['category']
         if given_category == 'not_sure':
             predicted_category = predict_category(news['summary'])
             news['category'] = predicted_category
+            print(f"Predicted category: {predicted_category} for news with title: {news['title']}")
     return news_data
 
 def load_raw_data():
@@ -76,6 +78,7 @@ def load_raw_data():
     return raw_content
 
 def run_refine_load():
+    print("-- Refine Load Started --")
     raw_news_data = load_raw_data()
     
     cleaned_items = []
@@ -101,6 +104,7 @@ def run_refine_load():
             "link": classified['link'],
             "insertTimeStamp": datetime.now()
         })
+    print("-- Refine Load Completed --")
 
 if __name__ == "__main__":
     run_refine_load()
