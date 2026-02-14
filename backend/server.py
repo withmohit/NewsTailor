@@ -8,7 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pwdlib import PasswordHash
 import jwt
 from jwt.exceptions import InvalidTokenError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from data_pipeline.classification import candidate_labels
+import random
+from mailjet_rest import Client
+api_key = os.getenv('MJ_APIKEY_PUBLIC')
+api_secret = os.getenv('MJ_APIKEY_PRIVATE')
+mailjet = Client(auth=(api_key, api_secret), version='v3.1')
 
 app = FastAPI()
 password_hash = PasswordHash.recommended()
@@ -27,6 +33,7 @@ MONGO_URL = os.getenv('MONGO_URL')
 db_client = MongoClient(MONGO_URL)
 db_name = db_client['newsTailor']
 user_collection = db_name['users']
+otp_collection = db_name['otp']
 salt = None
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -51,17 +58,80 @@ def create_access_token(data:dict,expire_delta):
     to_encode.update({'exp':expire})
     encoded_jwt = jwt.encode(to_encode,SECRET_KEY,ALGORITHM)
     return encoded_jwt
+    
+
+def create_email_data(email: str, name: str, otp: str):
+    html = f"""
+    <h1>Welcome to NewsTailor, {name}!</h1>
+    <p>Your OTP for verification is: <strong>{otp}</strong></p>
+    """
+    data = {
+        'Messages': [
+            {
+                "From": {
+                    "Email": "mohit2003praja@gmail.com",
+                    "Name": "Mohit"
+                },
+                "To": [
+                    {
+                        "Email": f"{email}",
+                        "Name": f"{name}"
+                    }
+                ],
+                "Subject": "NewsTailor - OTP Verification",
+                "HTMLPart": html
+            }
+        ]
+    }
+    return data
 
 @app.post("/register")
 def register_user(user: RegisterUser):
     print("Received")
     user_dict = user.model_dump()
     user_dict['password'] = hash_the_password(user_dict['password'])
-    result = user_collection.insert_one(user_dict)
+    already_exists = user_collection.find_one({"email": user_dict["email"]})
+    if already_exists:
+        return {"status": False, "message": "User already exists"}
+    
+    generated_otp = str(random.randint(1000,9999))
+
+    otp_collection.delete_many({"email": user_dict["email"]})
+
+    email_content = create_email_data(user_dict["email"], user_dict["name"], generated_otp)
+    mailjet.send.create(data=email_content)
+
+    otp_collection.insert_one({
+        'otp_to_verify':generated_otp,
+        'email': user_dict["email"],
+        'user_data': user_dict,
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5)
+    })
+
+    # result = user_collection.insert_one(user_dict)
     token_data = {
         "sub": user_dict["email"],
-        "user_id": str(result.inserted_id)
+        # "user_id": str(result.inserted_id)
     }
 
-    return {"message": create_access_token(token_data,timedelta(minutes=30))}
+    return {'status':True}
 
+@app.get("/categories_available")
+def send_list_of_categories():
+    return candidate_labels
+
+from pydantic import BaseModel
+
+class OTPVerifyRequest(BaseModel):
+    email: str
+    OTP: str
+
+@app.post("/verify-otp")
+def verify_otp(request: OTPVerifyRequest):
+    existing_request = otp_collection.find_one({"email": request.email})
+    if existing_request:
+        if request.OTP == existing_request["otp_to_verify"]:
+            user_collection.insert_one(existing_request["user_data"])
+            return {"message": "OTP verified successfully"}
+        else:
+            return {"message": "Invalid OTP"}
