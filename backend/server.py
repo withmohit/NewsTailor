@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from pymongo import MongoClient, errors
 import os
 from dotenv import load_dotenv
@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pwdlib import PasswordHash
 import jwt
 from jwt.exceptions import InvalidTokenError
+from .auth import get_current_user
 from datetime import datetime, timedelta, timezone
 from data_pipeline.classification import candidate_labels
 import random
@@ -46,11 +47,15 @@ class RegisterUser(BaseModel):
     password: str
     categories: List[str]
 
+class UserCredentials(BaseModel):
+    email: str
+    password: str
+
 def hash_the_password(password:str):
     return password_hash.hash(password)
 
 def verify_the_password(enterd_password, hashed_password):
-    return PasswordHash.verify(enterd_password, hashed_password)
+    return password_hash.verify(enterd_password, hashed_password)
 
 def create_access_token(data:dict,expire_delta):
     expire = datetime.now() + expire_delta
@@ -85,36 +90,45 @@ def create_email_data(email: str, name: str, otp: str):
     }
     return data
 
+@app.post("/signin")
+def signin_user(credentials: UserCredentials):
+    credentials.password
+    credentials.email
+    user_data = user_collection.find_one({"email": credentials.email})
+
+    if not user_data:
+        return {"status": False, "message": "Invalid email or password"}
+
+    if not verify_the_password(credentials.password, user_data["password"]):
+        return {"status": False, "message": "Invalid email or password"}
+
+    token = create_access_token({"sub": user_data["email"], "id": str(user_data["_id"])}, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    return {"status": True, "access_token": token, "token_type": "bearer"}
+
+
 @app.post("/register")
 def register_user(user: RegisterUser):
     print("Received")
     user_dict = user.model_dump()
     user_dict['password'] = hash_the_password(user_dict['password'])
+    user_dict['isSubscribed'] = False  # Add the isSubscribed flag
     already_exists = user_collection.find_one({"email": user_dict["email"]})
     if already_exists:
         return {"status": False, "message": "User already exists"}
     
     generated_otp = str(random.randint(1000,9999))
-
     otp_collection.delete_many({"email": user_dict["email"]})
-
     email_content = create_email_data(user_dict["email"], user_dict["name"], generated_otp)
-    mailjet.send.create(data=email_content)
-
+    response = mailjet.send.create(data=email_content)
+    print(response.json())
     otp_collection.insert_one({
-        'otp_to_verify':generated_otp,
+        'otp_to_verify': generated_otp,
         'email': user_dict["email"],
         'user_data': user_dict,
         "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5)
     })
+    return {'status': True}
 
-    # result = user_collection.insert_one(user_dict)
-    token_data = {
-        "sub": user_dict["email"],
-        # "user_id": str(result.inserted_id)
-    }
-
-    return {'status':True}
 
 @app.get("/categories_available")
 def send_list_of_categories():
@@ -135,3 +149,37 @@ def verify_otp(request: OTPVerifyRequest):
             return {"message": "OTP verified successfully"}
         else:
             return {"message": "Invalid OTP"}
+
+@app.get("/currentSub")
+def current_sub(current_user=Depends(get_current_user)):
+    user_details = user_collection.find_one({"email": current_user["email"]})
+    if user_details:
+        return {"categories": user_details["categories"]}
+    else:
+        return {"message": "User not found"}
+
+@app.get("/user-categories")
+def user_categories(current_user=Depends(get_current_user)):
+    user_details = user_collection.find_one({"email": current_user["email"]})
+    if user_details:
+        return {"categories": user_details["categories"]}
+    else:
+        return {"message": "User not found"}
+    
+@app.post("/user-categories")
+def update_user_categories(categories: List[str], current_user=Depends(get_current_user)):
+    user_collection.update_one({"email": current_user["email"]}, {"$set": {"categories": categories}})
+    return {"message": "Categories updated successfully"}
+
+@app.post("/unsubscribe")
+def unsubscribe_user(current_user=Depends(get_current_user)):
+    user_collection.update_one({"email": current_user["email"]}, {"$set": {"isSubscribed": False}})
+    return {"message": "Unsubscribed successfully"}
+
+@app.get("/unsubscribe")
+def check_subscription_status(current_user=Depends(get_current_user)):
+    user_details = user_collection.find_one({"email": current_user["email"]})
+    if user_details:
+        return {"isSubscribed": user_details.get("isSubscribed", False)}
+    else:
+        return {"message": "User not found"}
