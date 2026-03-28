@@ -42,9 +42,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 from .fetch_news import fetch_fresh_news
-api_key = os.getenv('MJ_APIKEY_PUBLIC')
-api_secret = os.getenv('MJ_APIKEY_PRIVATE')
-mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+
 
 news = send_selected_news(user1,fetch_fresh_news())
 
@@ -58,30 +56,3 @@ for category, articles in news.items():
           {a['summary']}
         </p>
         """
-
-
-data = {
-  'Messages': [
-				{
-						"From": {
-								"Email": "mohit2003praja@gmail.com",
-								"Name": "Mohit"
-						},
-						"To": [
-								{
-										"Email": "mohit.2003prajapati@gmail.com",
-										"Name": "Harsh"
-								}
-						],
-						"Subject": "NewsTailor First Email",
-						# "TextPart": f"Hope you find this intresting:{send_selected_news(user1,fetch_fresh_news())}",
-						# "HTMLPart": f"Hope you find this intresting:{send_selected_news(user1,fetch_fresh_news())}",
-                        "HTMLPart": html
-				}
-                # ,
-		]
-}
-result = mailjet.send.create(data=data)
-print (result.status_code)
-print (result.json())
-
