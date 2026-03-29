@@ -1,6 +1,8 @@
+from test import send_news_email
 user1 = {
     'name': 'Mohit',
-    'sub_category':['crime', 'india']
+    'sub_category':['crime'],
+    'email': 'mohit2003praja@gmail.com'
 }
 
 def get_latest_pipeline_run():
@@ -56,3 +58,5 @@ for category, articles in news.items():
           {a['summary']}
         </p>
         """
+
+send_news_email(user1['email'], html)

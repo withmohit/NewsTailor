@@ -93,6 +93,7 @@ const SignUp = () => {
     setError(null);
 
     if (!OTP.trim()) {
+      console.log(OTP)
       setDialogMessage('Please enter the OTP.');
       setDialogOpen(true);
       return;
