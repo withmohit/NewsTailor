@@ -61,12 +61,13 @@ def run_pipeline():
         run_scoring_process()
 
         mark_pipeline_success(run_id)
+
+        return run_id
     
     except Exception as e:
         mark_pipeline_failed(run_id, str(e))
         raise
 
-run_pipeline()
 # run_id = log_pipeline_start()
 # mark_pipeline_failed(run_id, "testing")
 

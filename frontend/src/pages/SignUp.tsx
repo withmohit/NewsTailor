@@ -26,6 +26,7 @@ const SignUp = () => {
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,8 +93,7 @@ const SignUp = () => {
     e.preventDefault();
     setError(null);
 
-    if (!OTP.trim()) {
-      console.log(OTP)
+    if (!OTP || OTP.trim() === "") {
       setDialogMessage('Please enter the OTP.');
       setDialogOpen(true);
       return;
@@ -103,6 +103,10 @@ const SignUp = () => {
     try {
       const res = await axios.post(`${API_BASE}/verify-otp`, { email, OTP });
       console.log(res.data);
+      if (res?.data?.message === "OTP verified successfully") {
+          setIsVerified(true);
+        }
+      
       // Optionally handle redirect or show success message here
     } catch (err) {
       console.error('Error verifying OTP:', err);
@@ -110,7 +114,7 @@ const SignUp = () => {
     } finally {
       setLoadingSubmit(false);
     }
-  }, [ email, showOtpSection]);
+  }, [email, OTP]);
 
   const badges = useMemo(() => {
     return categories.map((cat) => (
@@ -124,6 +128,14 @@ const SignUp = () => {
       </Badge>
     ));
   }, [categories, selected, toggleCategory]);
+
+  if (isVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <h1 className="text-xl font-semibold">Account Verified ✅</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -168,15 +180,27 @@ const SignUp = () => {
           {showOtpSection && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="OTP">OTP</Label>
-                <Input id="otp" value={OTP} onChange={(e) => setOTP(e.target.value)} placeholder="4 digit otp" required/>
+                <Label htmlFor="otp">OTP</Label>
+                <Input
+                  id="otp"
+                  value={OTP}
+                  onChange={(e) => setOTP(e.target.value)}
+                  placeholder="4 digit otp"
+                  required
+                />
               </div>
-              <Button type="submit" className="w-full" disabled={loadingSubmit}>
+
+              <Button
+                className="w-full"
+                type="submit"
+                disabled={loadingSubmit}
+              >
                 {loadingSubmit ? 'Verifying...' : 'Sign Up'}
               </Button>
             </>
           )}
         </form>
+        
       </main>
       <Footer />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -93,7 +93,7 @@ def register_user(user: RegisterUser):
     print("Received")
     user_dict = user.model_dump()
     user_dict['password'] = hash_the_password(user_dict['password'])
-    user_dict['isSubscribed'] = False  # Add the isSubscribed flag
+    user_dict['isSubscribed'] = True  # Add the isSubscribed flag
     already_exists = user_collection.find_one({"email": user_dict["email"]})
     if already_exists:
         return {"status": False, "message": "User already exists"}
