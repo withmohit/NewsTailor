@@ -1,5 +1,6 @@
 from datetime import datetime
 from pymongo import MongoClient, errors
+from data_pipeline.classification import candidate_labels
 import os
 from dotenv import load_dotenv
 
@@ -12,14 +13,14 @@ db_name = mongo_client['newsTailor']
 refined_collection = db_name['refined']
 scored_collection = db_name['scored']
 
-topics = ["tech_and_science", "crime", "india", "politics", "religion"]
+topics = candidate_labels
 
 def fetch_fresh_news():
     top_news_cache = {
         cat: list(
             scored_collection.find({"category": cat})
                 .sort("score", -1)
-                .limit(3)
+                .limit(5)
         )
         for cat in topics
     }

@@ -1,8 +1,8 @@
 from test import send_news_email
 user1 = {
     'name': 'Mohit',
-    'sub_category':['crime'],
-    'email': 'mohit2003praja@gmail.com'
+    'sub_category':['religion','crime'],
+    'email': 'lcb2021047@iiitl.ac.in'
 }
 
 def get_latest_pipeline_run():
@@ -29,20 +29,17 @@ def send_selected_news(user, fetched_news):
                 "summary": info["summary"],
                 "link": info["link"],
             }
-            for info in fetched_news[cat][:2]
+            for info in fetched_news[cat][:5]
         ]
         for cat in user["sub_category"]
     }
 
 
-
 """
 This call sends 2 messages to 2 different recipients.
 """
-from mailjet_rest import Client
 from dotenv import load_dotenv
-load_dotenv()
-import os
+
 from .fetch_news import fetch_fresh_news
 
 
