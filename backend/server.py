@@ -12,8 +12,7 @@ from .auth import get_current_user
 from datetime import datetime, timedelta, timezone
 from data_pipeline.classification import candidate_labels
 import random
-from mailjet_rest import Client
-from test import send_otp_email
+from email_service import send_otp_email
 
 
 app = FastAPI()
@@ -64,7 +63,7 @@ def create_access_token(data:dict,expire_delta):
     return encoded_jwt
     
 
-def create_email_data(email: str, name: str, otp: str):
+def create_email_data(name: str, otp: str):
     html = f"""
     <h1>Welcome to NewsTailor, {name}!</h1>
     <p>Your OTP for verification is: <strong>{otp}</strong></p>
@@ -100,8 +99,9 @@ def register_user(user: RegisterUser):
     
     generated_otp = str(random.randint(1000,9999))
     otp_collection.delete_many({"email": user_dict["email"]})
-    email_content = create_email_data(user_dict["email"], user_dict["name"], generated_otp)
-    response = send_otp_email(user_dict["email"], email_content)
+    email_content = create_email_data(user_dict["name"], generated_otp)
+    if not send_otp_email(user_dict["email"], email_content):
+        return {"status": False, "message": "Failed to send verification email, please try again"}
     otp_collection.insert_one({
         'otp_to_verify': generated_otp,
         'email': user_dict["email"],

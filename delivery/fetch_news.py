@@ -1,5 +1,4 @@
-from datetime import datetime
-from pymongo import MongoClient, errors
+from pymongo import MongoClient
 from data_pipeline.classification import candidate_labels
 import os
 from dotenv import load_dotenv
@@ -10,7 +9,6 @@ MONGO_URL = os.getenv('MONGO_URL')
 
 mongo_client = MongoClient(MONGO_URL)
 db_name = mongo_client['newsTailor']
-refined_collection = db_name['refined']
 scored_collection = db_name['scored']
 
 topics = candidate_labels
@@ -24,8 +22,6 @@ def fetch_fresh_news():
         )
         for cat in topics
     }
-    print(top_news_cache)
     return top_news_cache
 
-fetch_fresh_news()
 
